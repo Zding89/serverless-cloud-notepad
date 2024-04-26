@@ -17,7 +17,7 @@ router.get('/', ({ url }) => {
 router.get('/share/:md5', async ({ params }) => {
     const { md5 } = params
     const path = await SHARE.get(md5)
-
+    //待修改为,s为分享文本,m为分享markdown
     if (!!path) {
         const { value, metadata } = await queryNote(path)
 
