@@ -73,32 +73,64 @@ window.addEventListener('DOMContentLoaded', function () {
     renderMarkdown($previewMd, $textarea.value)
 
     if ($textarea) {
-        $textarea.oninput = throttle(function () {
-            renderMarkdown($previewMd, $textarea.value)
+        let saveTimeout; // 保存定时器
+        let countdown; // 倒计时定时器
 
-            $loading.style.display = 'inline-block'
-            const data = {
-                t: $textarea.value,
-            }
+        function clearTimers() {
+            clearTimeout(saveTimeout);
+            clearTimeout(countdown);
+        }
 
-            window.fetch('', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: new URLSearchParams(data),
-            })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.err !== 0) {
-                        errHandle(res.msg)
-                    }
-                })
-                .catch(err => errHandle(err))
-                .finally(() => {
-                    $loading.style.display = 'none'
-                })
-        }, 1000)
+         // 开始倒计时
+        function startCountdown() {
+            clearTimers();
+            $loading.style.display = 'inline-block'; // 显示加载动画
+
+            // 设置倒计时定时器
+            let seconds = 10; // 倒计时秒数
+            let countdownInterval = setInterval(function () {
+                seconds--;
+                $loading.textContent = `${seconds} s`; // 更新加载动画中的秒数
+
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval); // 清除倒计时定时器
+                    $loading.textContent = ''; // 清除加载动画中的秒数
+
+                    // 发送保存请求
+                    window.fetch('', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                        body: new URLSearchParams({
+                            t: $textarea.value,
+                        }),
+                    })
+                        .then(res => res.json())
+                        .then(res => {
+                            if (res.err !== 0) {
+                                errHandle(res.msg);
+                            }
+                        })
+                        .catch(err => errHandle(err))
+                        .finally(() => {
+                            $loading.style.display = 'none'; // 隐藏加载动画
+                        });
+                }
+            }, 1000); // 每秒更新一次
+        }
+
+        
+        $textarea.oninput = function () {
+            // 渲染Markdown预览
+            renderMarkdown($previewMd, $textarea.value);
+
+            // 清除之前的定时器
+            clearTimers();
+
+            // 设置新的定时器
+            saveTimeout = setTimeout(startCountdown, 1000); // 1秒后开始倒计时
+        };
     }
 
     if ($pwBtn) {
