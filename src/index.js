@@ -31,6 +31,19 @@ router.get('/share/:md5', async ({ params }) => {
     return returnPage('Page404', { title: '404' })
 })
 
+router.get('/t/:md5', async ({ params, res }) => {
+    const { md5 } = params;
+    const path = await SHARE.get(md5);
+    if (!!path) {
+        const { value } = await queryNote(path);
+        res.type('text/plain');
+        return res.send(value);
+    }
+
+    res.status(404);
+    return res.send('404 Not Found');
+});
+
 router.get('/:path', async ({ params, headers }) => {
     const { path } = params
     const title = decodeURIComponent(path)
